@@ -1,5 +1,6 @@
 # vampirescan.py
 
+import threading
 import socket
 
 class NetworkScanner:
@@ -44,10 +45,19 @@ class NetworkScanner:
 
     
     def start_scan(self, ports_list):
+
         print(f"/[*] Start scaning on {self.target_ip}")
+        threads = []
+
         for port in ports_list:
             print(f"Scaning on {port}")
-            self.scan_port(port)
+            t = threading.Thread(target = self.scan_port, args = (port,))
+
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
 
 
 
@@ -59,9 +69,10 @@ if __name__ == "__main__":
     target_ip = input("Enter target IP: ")
 
     # common ports list [FTP, SSH, HTTP, HTTPS, Netcat]
-    common_ports = [21, 22, 83, 443, 4444]
+    common_ports = [21, 22, 83, 443, 4444, 403, 23, 24, 55, 4567, 3245, 5421, 345, 101, 2323]
 
 
     scanner = NetworkScanner(target_ip)
 
     scanner.start_scan(common_ports)
+    
