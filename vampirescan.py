@@ -1,5 +1,6 @@
 # vampirescan.py
 
+import argparse
 import threading
 import socket
 
@@ -32,7 +33,7 @@ class NetworkScanner:
                   print(f"  [--->] Banner: {banner.decode('utf-8').strip()}")
 
                 except:
-                  print(f"  [--->] Open but No banner returned.")
+                  print(f"'{port}'[--->] Open but No banner returned.")
 
             else:
                 print("PORT is closed...")
@@ -62,17 +63,19 @@ class NetworkScanner:
 
 
 if __name__ == "__main__":
-    print("="*30)
-    print("     VampireScanner v1.0")
-    print("="*30)
+    parser = argparse.ArgumentParser(description = "Octopus Scanner v 1.2 Upgraded.")
 
-    target_ip = input("Enter target IP: ")
-
-    # common ports list [FTP, SSH, HTTP, HTTPS, Netcat]
-    common_ports = [21, 22, 83, 443, 4444, 403, 23, 24, 55, 4567, 3245, 5421, 345, 101, 2323]
-
-
-    scanner = NetworkScanner(target_ip)
-
-    scanner.start_scan(common_ports)
+    parser.add_argument("-t", "--target", required = True, help = "Target ip is required.")
+    parser.add_argument("-p", "--ports", required = True, help = "port is required separated with commas.")
     
+    args = parser.parse_args()
+
+    try:
+        ports_list = [int(p) for p in args.ports.split(",")]
+
+    except:
+        print("[!] ports must be separated with commas.")
+        exit()
+
+    scanner = NetworkScanner(args.target)
+    scanner.start_scan(ports_list)
