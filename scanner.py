@@ -62,17 +62,33 @@ class NetworkScanner:
                 self.logger.info("[*] PORT %s IS OPEN:",port)
                 self.logger.info("[*] Start grabbing banners.")
 
+                # Adaptive banner grabbing
                 try:
-                    #Server ko aik basic HTTP request bhejo taake woh bolne par majboor ho jaye
-                    http_request = "GET / HTTP/1.1\r\nHost: {}\r\n\r\n".format(self.target_ip)
-                    server.sendall(http_request.encode('utf-8'))
-                    
-                    banner = server.recv(1024)
+                    # pehle chup kr k 1 sec k liye recv pr bethna aur dekhna kia port khud data throw kr rha hai ya nai.
+                    server.settimeout(1.0)
+                    banner = server.recv(2048)
                     banner_text = banner.decode("utf-8", errors="replace").strip()
-                    self.logger.info("[--->] Banner: %s", banner_text)
+                    self.logger.info("[--->][*] PORT %s Banner (Direct): %s", port, banner_text)
+                
+                except socket.timeout:
+                    # step 2 agr 1 sec tk koi data recv pr khud se nai ata us case mein http request ka raw packets generate kr k through karyn gye.
+                    self.logger.info("[*]Port %s not given a data. HTTP request is now sending on port.", port)
+
+                    try:
+                        server.settimeout(self.timeout)
+                        http_request = f"GET / HTTP/1.1\nHost: {self.target_ip}\r\n\r\n"
+                        server.sendall(http_request.encode('utf-8'))
+                        
+                        banner = server.recv(2048)
+                        banner_text = banner.decode("uft-8", errors="replace").strip()
+                        self.logger.info("[--->[*] Port %s Banner (HTTP probe): %s", port, banner_text)
+
+                    except Exception:
+                        self.logger.info("[!] port Open %s: But refused to talk altogether.", port)
                 
                 except Exception:
-                    self.logger.info("[!] %s: PORT IS OPEN BUT NO BANNER RETURN.", port)
+                    self.logger.info("[!] PORT %s, Banner grab failed during raw connection", port)
+
             else:
                 self.logger.info("[!] %s: PORT IS CLOSED", port)
         
